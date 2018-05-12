@@ -1,64 +1,14 @@
-public class BreadcrumbElement : Gtk.Widget {
-    private const string ARROW_BUTTON = """
-        button:not(:last-child) .no-end-button {
-            border-right-width: 0;
-            border-top-right-radius: 0;
-            border-bottom-right-radius: 0;
-        }
-
-        button {
-            padding-right:0px;
-        }
-
-        button:not(:first-child) {
-            padding-left: 16px;
-        }
-
-        button:not(:first-child) .no-end-button {
-            border-left-width: 0px;
-            border-top-left-radius: 0;
-            border-bottom-left-radius: 0;
-        }
-
-        button .arrow-button {
-            border-radius: 0px;
-            border-left-width: 0;
-            border-bottom-width: 0;
-        }
-    """;
-
-
-    private string _label = "";
-    public string label {
-        get {
-            return _label;
-        }
-        set {
-            if (_label != value) {
-                _label = value;
-                layout = create_pango_layout (value);
-            }
-        }
-    }
-
-    private static Gtk.CssProvider arrow_provider;
-    private Pango.Layout layout;
+public class BreadcrumbElement : Gtk.Bin {
 
     class construct {
         set_css_name ("button");
-        arrow_provider = new Gtk.CssProvider ();
-        try {
-            arrow_provider.load_from_data (ARROW_BUTTON);
-        } catch (Error e) {
-            critical (e.message);
-        }
     }
 
     construct {
-        layout = create_pango_layout (label);
+        events |= Gdk.EventMask.BUTTON_PRESS_MASK;
         set_has_window (false);
         get_style_context ().add_class (Gtk.STYLE_CLASS_BUTTON);
-        get_style_context ().add_provider (arrow_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+        get_style_context ().add_provider (Breadcrumb.arrow_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
     }
 
     public override bool draw (Cairo.Context cr) {
@@ -100,8 +50,14 @@ public class BreadcrumbElement : Gtk.Widget {
         style_context.render_frame (cr, -square_width2, -square_height2, square_width, square_height);
         style_context.restore ();
         cr.restore ();
-
-        style_context.render_layout (cr, padding.left, padding.top, layout);
+        var children = get_children ();
+        children.reverse ();
+        children.foreach ((child) => {
+            cr.save ();
+            child.draw (cr);
+            cr.restore ();
+            cr.translate (child.get_allocated_width (), 0);
+        });
 
         return true;
     }
@@ -115,29 +71,11 @@ public class BreadcrumbElement : Gtk.Widget {
         return height/2;
     }
 
-    public override void get_preferred_height (out int minimum_height, out int natural_height) {
-        int width;
-        int height;
-        var style_context = get_style_context ();
-        Gtk.Border padding = style_context.get_padding (style_context.get_state ());
-        Gtk.Border margin = style_context.get_margin (style_context.get_state ());
-
-        layout.get_pixel_size (out width, out height);
-        minimum_height = height + padding.top + padding.bottom + margin.top + margin.bottom;
-        natural_height = minimum_height;
-        //base.get_preferred_height (out minimum_height, out natural_height);
-    }
-
     public override void get_preferred_width (out int minimum_width, out int natural_width) {
-        int width;
-        int height;
-        var style_context = get_style_context ();
-        Gtk.Border padding = style_context.get_padding (style_context.get_state ());
-        Gtk.Border margin = style_context.get_margin (style_context.get_state ());
-
-        layout.get_pixel_size (out width, out height);
-        minimum_width = width + padding.left + padding.right + margin.left + margin.right;
-        natural_width = minimum_width;
+        base.get_preferred_width (out minimum_width, out natural_width);
+        var arrow_width = get_arrow_width ();
+        minimum_width += arrow_width;
+        natural_width += arrow_width;
     }
 
     /*
