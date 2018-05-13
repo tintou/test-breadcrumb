@@ -1,5 +1,5 @@
 public class Breadcrumb : Gtk.Grid {
-    private const string ARROW_BUTTON = """
+    private const string BREADCRUMB = """
         breadcrumb {
             padding: 0;
         }
@@ -35,15 +35,15 @@ public class Breadcrumb : Gtk.Grid {
 
         breadcrumb button {
             outline-width: 0;
+            box-shadow: 0px 0px;
         }
     """;
-    public static Gtk.CssProvider arrow_provider;
 
     class construct {
         set_css_name ("breadcrumb");
-        arrow_provider = new Gtk.CssProvider ();
+        var arrow_provider = new Gtk.CssProvider ();
         try {
-            arrow_provider.load_from_data (ARROW_BUTTON);
+            arrow_provider.load_from_data (BREADCRUMB);
         } catch (Error e) {
             critical (e.message);
         }

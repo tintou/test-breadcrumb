@@ -1,13 +1,15 @@
 public class BreadcrumbElement : Gtk.EventBox {
 
     class construct {
-        set_css_name ("button");
+        if (Gtk.Settings.get_default ().gtk_theme_name == "elementary"){
+            set_css_name ("breadcrumb-entry");
+        } else {
+            set_css_name ("button");
+        }
     }
 
     construct {
         can_focus = true;
-        get_style_context ().add_class (Gtk.STYLE_CLASS_BUTTON);
-        get_style_context ().add_provider (Breadcrumb.arrow_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
         focus_out_event.connect (() => {
             queue_redraw ();
         });
@@ -31,7 +33,11 @@ public class BreadcrumbElement : Gtk.EventBox {
         height += parent_padding.top + parent_padding.bottom;
 
         var border = style_context.get_border (state);
-        var padding = style_context.get_padding (state);
+
+        var arrow_width = (height + border.left + border.right)/GLib.Math.SQRT2;
+        var arrow_height = (height + border.top + border.bottom)/GLib.Math.SQRT2;
+        var arrow_x = (height/2 + border.left + border.right)/GLib.Math.SQRT2;
+        var arrow_y = (height/2 + border.top + border.bottom)/GLib.Math.SQRT2;
 
         style_context.save ();
         style_context.add_class ("no-end-button");
@@ -39,22 +45,22 @@ public class BreadcrumbElement : Gtk.EventBox {
         style_context.render_frame (cr, 0, 0, width, height);
         style_context.render_focus (cr, 0, 0, width, height);
         style_context.restore ();
+
         cr.save ();
         cr.translate (width, height / 2 + border.top);
         cr.rectangle (0, -height / 2, height - border.top - border.bottom, height - border.left - border.right);
         cr.clip ();
         cr.rotate (Math.PI_4);
+
         style_context.save ();
         style_context.add_class ("arrow-button");
-        var square_width = (height + border.left + border.right)/GLib.Math.SQRT2;
-        var square_height = (height + border.top + border.bottom)/GLib.Math.SQRT2;
-        var square_width2 = (height/2 + border.left + border.right)/GLib.Math.SQRT2;
-        var square_height2 = (height/2 + border.top + border.bottom)/GLib.Math.SQRT2;
-        style_context.render_background (cr, -square_width2, -square_height2, square_width, square_height);
-        style_context.render_frame (cr, -square_width2, -square_height2, square_width, square_height);
-        style_context.render_focus (cr, -square_width2, -square_height2, square_width, square_height);
+        style_context.render_background (cr, -arrow_x, -arrow_y, arrow_width, arrow_height);
+        style_context.render_frame (cr, -arrow_x, -arrow_y, arrow_width, arrow_height);
+        style_context.render_focus (cr, -arrow_x, -arrow_y, arrow_width, arrow_height);
         style_context.restore ();
+
         cr.restore ();
+
         var children = get_children ();
         children.reverse ();
         children.foreach ((child) => {
