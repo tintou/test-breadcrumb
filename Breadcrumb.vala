@@ -11,26 +11,30 @@ public class Breadcrumb : Gtk.Grid {
         }
 
         breadcrumb button:not(:first-child) > * {
-            padding:6px;
-            padding-left:22px;
-            padding-right:0px;
+            padding: 6px;
+            padding-left: 22px;
+            padding-right: 0;
         }
 
         breadcrumb button:first-child > * {
             padding:6px;
-            padding-right:0px;
+            padding-right: 0;
         }
 
         breadcrumb button:not(:first-child) .no-end-button {
-            border-left-width: 0px;
+            border-left-width: 0;
             border-top-left-radius: 0;
             border-bottom-left-radius: 0;
         }
 
         breadcrumb button .arrow-button {
-            border-radius: 0px;
+            border-radius: 0;
             border-left-width: 0;
             border-bottom-width: 0;
+        }
+
+        breadcrumb button {
+            outline-width: 0;
         }
     """;
     public static Gtk.CssProvider arrow_provider;
@@ -48,7 +52,6 @@ public class Breadcrumb : Gtk.Grid {
     }
 
     construct {
-        events |= Gdk.EventMask.BUTTON_PRESS_MASK;
         hexpand = true;
         var ele1 = new BreadcrumbElement ();
         var home_image = new Gtk.Image.from_icon_name ("user-home-symbolic", Gtk.IconSize.MENU);
@@ -75,11 +78,6 @@ public class Breadcrumb : Gtk.Grid {
         add (ele4);
     }
 
-    public override bool button_press_event (Gdk.EventButton event) {
-        warning ("");
-        return button_press_event (event);
-    }
-
     public override bool draw (Cairo.Context cr) {
         int width = get_allocated_width ();
         int height = get_allocated_height ();
@@ -95,12 +93,12 @@ public class Breadcrumb : Gtk.Grid {
         cr.translate (margin.left, margin.top);
         cr.translate (padding.left, padding.top);
         var children = get_children ();
-        children.reverse ();
+        cr.translate (width, 0);
         children.foreach ((child) => {
+            cr.translate (-child.get_allocated_width (), 0);
             cr.save ();
             child.draw (cr);
             cr.restore ();
-            cr.translate (child.get_allocated_width (), 0);
         });
         return true;
     }

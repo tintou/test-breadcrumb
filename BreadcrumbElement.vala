@@ -1,14 +1,16 @@
-public class BreadcrumbElement : Gtk.Bin {
+public class BreadcrumbElement : Gtk.EventBox {
 
     class construct {
         set_css_name ("button");
     }
 
     construct {
-        events |= Gdk.EventMask.BUTTON_PRESS_MASK;
-        set_has_window (false);
+        can_focus = true;
         get_style_context ().add_class (Gtk.STYLE_CLASS_BUTTON);
         get_style_context ().add_provider (Breadcrumb.arrow_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+        focus_out_event.connect (() => {
+            queue_redraw ();
+        });
     }
 
     public override bool draw (Cairo.Context cr) {
@@ -33,6 +35,7 @@ public class BreadcrumbElement : Gtk.Bin {
 
         style_context.save ();
         style_context.add_class ("no-end-button");
+        style_context.render_background (cr, 0, 0, width, height);
         style_context.render_frame (cr, 0, 0, width, height);
         style_context.render_focus (cr, 0, 0, width, height);
         style_context.restore ();
@@ -47,7 +50,9 @@ public class BreadcrumbElement : Gtk.Bin {
         var square_height = (height + border.top + border.bottom)/GLib.Math.SQRT2;
         var square_width2 = (height/2 + border.left + border.right)/GLib.Math.SQRT2;
         var square_height2 = (height/2 + border.top + border.bottom)/GLib.Math.SQRT2;
+        style_context.render_background (cr, -square_width2, -square_height2, square_width, square_height);
         style_context.render_frame (cr, -square_width2, -square_height2, square_width, square_height);
+        style_context.render_focus (cr, -square_width2, -square_height2, square_width, square_height);
         style_context.restore ();
         cr.restore ();
         var children = get_children ();
@@ -71,11 +76,46 @@ public class BreadcrumbElement : Gtk.Bin {
         return height/2;
     }
 
+    public override bool button_press_event (Gdk.EventButton event) {
+        set_state_flags (Gtk.StateFlags.ACTIVE, false);
+        queue_redraw ();
+        return base.button_press_event (event);
+    }
+
+    public override bool button_release_event (Gdk.EventButton event) {
+        unset_state_flags (Gtk.StateFlags.ACTIVE);
+        grab_focus ();
+        queue_redraw ();
+        return base.button_release_event (event);
+    }
+
+    public override bool key_press_event (Gdk.EventKey event) {
+        if (event.keyval == Gdk.Key.Return) {
+            set_state_flags (Gtk.StateFlags.ACTIVE, false);
+            queue_redraw ();
+        }
+
+        return base.key_press_event (event);
+    }
+
+    public override bool key_release_event (Gdk.EventKey event) {
+        if (event.keyval == Gdk.Key.Return) {
+            unset_state_flags (Gtk.StateFlags.ACTIVE);
+            queue_redraw ();
+        }
+
+        return base.key_release_event (event);
+    }
+
     public override void get_preferred_width (out int minimum_width, out int natural_width) {
         base.get_preferred_width (out minimum_width, out natural_width);
         var arrow_width = get_arrow_width ();
         minimum_width += arrow_width;
         natural_width += arrow_width;
+    }
+
+    private void queue_redraw () {
+        get_parent ().queue_draw ();
     }
 
     /*
